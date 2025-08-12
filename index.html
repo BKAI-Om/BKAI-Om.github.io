@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Recommendation Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Custom track and thumb styles for range input */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3B82F6; /* Blue-600 */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3); /* Ring focus effect */
+            margin-top: -7px; /* Adjust to center thumb on track */
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #3B82F6; /* Blue-600 */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: #BFDBFE; /* Blue-200 */
+            border-radius: 3px;
+        }
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            background: #BFDBFE; /* Blue-200 */
+            border-radius: 3px;
+        }
+    </style>
+    <!-- Firebase CDN scripts for authentication and firestore -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+</head>
+<body class="font-inter">
+    <div id="app" class="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center p-4 sm:p-6">
+        <!-- Content will be rendered here by JavaScript -->
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ====================================================================
+        // State Management
+        // ====================================================================
+        const state = {
+            step: 0,
+            answers: { budget: 50000 },
+            recommendations: null,
+            loading: false,
+            audioLoading: false,
+            error: '',
+            activeTab: 'Around Budget Tier',
+            db: null,
+            auth: null,
+            userId: null,
+            isAuthReady: false,
+            audioUrl: null
+        };
+
+        const questions = [
+            {
+                id: 'budget',
+                question: "What's your approximate budget for a car?",
+                type: 'range',
+                min: 8000,
+                max: 300000,
+                step: 1000,
+                displayValue: (val) => `$${val.toLocaleString()}${val === 300000 ? '+' : ''}`
+            },
+            {
+                id: 'car_type',
+                question: "What type of vehicle are you primarily looking for?",
+                type: 'checkbox',
+                options: ['Sedan', 'SUV', 'Truck', 'Hatchback', 'Coupe', 'Minivan', 'Electric Vehicle', 'Hybrid']
+            },
+            {
+                id: 'drivetrain',
+                question: "What drivetrain do you prefer?",
+                type: 'radio',
+                options: ['Front-Wheel Drive (FWD)', 'Rear-Wheel Drive (RWD)', 'All-Wheel Drive (AWD)', 'Four-Wheel Drive (4WD)', 'No Preference']
+            },
+            {
+                id: 'size_spaciousness',
+                question: "How important is the size and spaciousness of the car?",
+                type: 'radio',
+                options: ['Compact', 'Standard', 'Large/Spacious', 'Very Spacious/Family-sized']
+            },
+            {
+                id: 'passengers',
+                question: "How many passengers do you typically need to accommodate?",
+                type: 'radio',
+                options: ['1-2', '3-4', '5-7', '7+']
+            },
+            {
+                id: 'driving_feel',
+                question: "How would you describe your preferred driving feel?",
+                type: 'radio',
+                options: ['Sporty/Agile', 'Comfortable/Smooth', 'Rugged/Capable', 'Balanced']
+            },
+            {
+                id: 'acceleration',
+                question: "What kind of acceleration do you prefer?",
+                type: 'radio',
+                options: ['Economical', 'Standard', 'Responsive', 'Powerful']
+            },
+            {
+                id: 'aesthetic_look',
+                question: "What aesthetic best describes your preferred car look?",
+                type: 'radio',
+                options: ['Modern/Sleek', 'Classic/Timeless', 'Rugged/Adventurous', 'Elegant/Luxurious', 'Practical/Understated']
+            },
+            {
+                id: 'disliked_styles',
+                question: "Are there any specific body styles or features you dislike?",
+                type: 'text',
+                placeholder: 'e.g., boxy, too sporty, too plain (optional)'
+            },
+            {
+                id: 'reliability_durability',
+                question: "How important is long-term reliability and durability to you?",
+                type: 'radio',
+                options: ['Extremely Important', 'Very Important', 'Moderately Important', 'Less Important']
+            },
+            {
+                id: 'long_lasting',
+                question: "Are you looking for a car that is known for being long-lasting?",
+                type: 'radio',
+                options: ['Yes', 'No', 'Neutral']
+            },
+            {
+                id: 'primary_use',
+                question: "What will be the primary use of the car?",
+                type: 'checkbox',
+                options: ['Daily Commute', 'Family Vehicle', 'Off-roading/Adventure', 'City Driving', 'Long Road Trips', 'Work/Hauling']
+            },
+            {
+                id: 'new_used',
+                question: "Are you primarily looking for a new or used car?",
+                type: 'radio',
+                options: ['New', 'Used', 'Either']
+            },
+            {
+                id: 'used_condition',
+                question: "If used, what condition are you looking for?",
+                type: 'radio',
+                options: ['Excellent', 'Good', 'Fair', 'Any']
+            },
+            {
+                id: 'used_mileage_range',
+                question: "What's your preferred range for a used car's mileage?",
+                type: 'radio',
+                options: ['Low (<50,000 km)', 'Medium (50,000 - 150,000 km)', 'High (>150,000 km)', 'Any']
+            },
+            {
+                id: 'advanced_features_importance',
+                question: "How important are advanced features and technology to you?",
+                type: 'radio',
+                options: ['Very Important', 'Moderately Important', 'Less Important']
+            },
+            {
+                id: 'must_have_features',
+                question: "Which of these features are 'must-haves'?",
+                type: 'checkbox',
+                options: ['Touchscreen Infotainment', 'Apple CarPlay/Android Auto', 'Advanced Safety Features (e.g., lane assist, blind-spot monitoring)', 'Heated Seats', 'Sunroof/Moonroof', 'Premium Sound System', 'Leather Interior', 'Navigation System', 'Keyless Entry/Push Button Start']
+            },
+            {
+                id: 'luxury_importance',
+                question: "How important are special features or luxury elements?",
+                type: 'radio',
+                options: ['Very Important', 'Moderately Important', 'Less Important', 'Not Important']
+            },
+            {
+                id: 'fuel_efficiency',
+                question: "How important is fuel efficiency?",
+                type: 'radio',
+                options: ['Extremely Important', 'Very Important', 'Moderately Important', 'Less Important']
+            },
+            {
+                id: 'electric_hybrid_interest',
+                question: "Are you interested in electric or hybrid vehicles?",
+                type: 'radio',
+                options: ['Yes', 'No', 'Maybe']
+            }
+        ];
+
+        // ====================================================================
+        // Firebase and API Utilities
+        // ====================================================================
+        
+        // Function to convert PCM audio data to WAV format
+        const pcmToWav = (pcmData, sampleRate) => {
+            const pcm16 = new Int16Array(pcmData);
+            const numChannels = 1; // Assuming mono audio
+            const bytesPerSample = 2; // 16-bit PCM
+
+            const wavBuffer = new ArrayBuffer(44 + pcm16.byteLength);
+            const view = new DataView(wavBuffer);
+
+            const writeString = (view, offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            // RIFF chunk descriptor
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16.byteLength, true);
+            writeString(view, 8, 'WAVE');
+
+            // FMT sub-chunk
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true); // Subchunk1Size for PCM
+            view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * bytesPerSample, true); // ByteRate
+            view.setUint16(32, numChannels * bytesPerSample, true); // BlockAlign
+            view.setUint16(34, bytesPerSample * 8, true); // BitsPerSample
+
+            // DATA sub-chunk
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16.byteLength, true);
+
+            // Write PCM data
+            for (let i = 0; i < pcm16.length; i++) {
+                view.setInt16(44 + i * bytesPerSample, pcm16[i], true);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        };
+
+        const base64ToArrayBuffer = (base64) => {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
+
+        const parseRecommendations = (text) => {
+            const tiers = {
+                'Cheaper Tier': { title: 'Cheaper Tier', description: '', cars: [] },
+                'Around Budget Tier': { title: 'Around Budget Tier', description: '', cars: [] },
+                'More Expensive Tier': { title: 'More Expensive Tier', description: '', cars: [] }
+            };
+
+            let currentTier = null;
+            const lines = text.split('\n');
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (line.startsWith('Cheaper Tier:')) {
+                    currentTier = 'Cheaper Tier';
+                    tiers[currentTier].description = line.substring('Cheaper Tier:'.length).trim().replace(/\*\*(.*?)\*\*/g, '$1'); // Remove bold markdown
+                } else if (line.startsWith('Around Budget Tier:')) {
+                    currentTier = 'Around Budget Tier';
+                    tiers[currentTier].description = line.substring('Around Budget Tier:'.length).trim().replace(/\*\*(.*?)\*\*/g, '$1');
+                } else if (line.startsWith('More Expensive Tier:')) {
+                    currentTier = 'More Expensive Tier';
+                    tiers[currentTier].description = line.substring('More Expensive Tier:'.length).trim().replace(/\*\*(.*?)\*\*/g, '$1');
+                } else if (currentTier && line.startsWith('-')) {
+                    const carInfo = line.substring(1).trim(); // Remove the leading '-'
+                    const parts = carInfo.split(' | ').map(part => part.trim());
+                    if (parts.length >= 5) { // Updated to expect 5 parts
+                        tiers[currentTier].cars.push({
+                            model: parts[0],
+                            price: parts[1],
+                            condition: parts[2],
+                            mileage: parts[3],
+                            features: parts[4]
+                        });
+                    } else {
+                        tiers[currentTier].cars.push({
+                            model: parts[0] || 'Unknown Model',
+                            price: parts[1] || 'N/A',
+                            condition: parts[2] || 'N/A',
+                            mileage: parts[3] || 'N/A',
+                            features: parts[4] || 'No specific features listed.'
+                        });
+                    }
+                }
+            });
+            return tiers;
+        };
+
+        const handleSubmitQuiz = async () => {
+            state.loading = true;
+            state.error = '';
+            state.recommendations = null;
+            state.audioUrl = null;
+            renderApp();
+
+            const prompt = `Based on the following car preferences and the user's budget of "${state.answers.budget.toLocaleString()}+", please suggest car models.
+            Categorize the recommendations into three distinct tiers: "Cheaper Tier", "Around Budget Tier", and "More Expensive Tier".
+            For each tier, provide 2-3 example suggestions. Each suggestion must include:
+            - **Full Car Model (Year Make Model)**
+            - **Average Price (e.g., $X,XXX)**
+            - **Typical Condition (e.g., Excellent, Good, Fair)**
+            - **Typical Mileage (e.g., 55,000 km)**
+            - **Common Features (e.g., Heated Seats, Sunroof, Backup Camera, AWD)**
+
+            User Preferences:
+            ${Object.entries(state.answers).map(([key, value]) => {
+                const questionText = questions.find(q => q.id === key)?.question || key;
+                return `- ${questionText}: ${Array.isArray(value) ? value.join(', ') : value}`;
+            }).join('\n')}
+
+            Please structure your response precisely as follows:
+
+            Cheaper Tier: **[Brief description for Cheaper Tier]**
+            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
+            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
+
+            Around Budget Tier: **[Brief description for Around Budget Tier]**
+            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
+            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
+
+            More Expensive Tier: **[Brief description for More Expensive Tier]**
+            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
+            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
+            `;
+
+            let retries = 0;
+            const maxRetries = 5;
+            const baseDelay = 1000;
+
+            while (retries < maxRetries) {
+                try {
+                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const parsed = parseRecommendations(result.candidates[0].content.parts[0].text);
+                        state.recommendations = parsed;
+                        state.activeTab = 'Around Budget Tier';
+                        break;
+                    } else {
+                        throw new Error("Unexpected API response structure or no content.");
+                    }
+                } catch (err) {
+                    console.error("Error generating recommendations:", err);
+                    state.error = `Failed to get recommendations. Please try again. (${err.message})`;
+                    retries++;
+                    if (retries < maxRetries) {
+                        const delay = baseDelay * Math.pow(2, retries - 1);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                } finally {
+                    state.loading = false;
+                    renderApp();
+                }
+            }
+        };
+
+        const generateAudio = async (text) => {
+            state.audioLoading = true;
+            state.audioUrl = null;
+            state.error = '';
+            renderApp();
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: text }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Kore" }
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            let retries = 0;
+            const maxRetries = 5;
+            const baseDelay = 1000;
+
+            while (retries < maxRetries) {
+                try {
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const part = result?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+                    const mimeType = part?.inlineData?.mimeType;
+
+                    if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
+                        const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                        const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
+                        const pcmData = base64ToArrayBuffer(audioData);
+                        const wavBlob = pcmToWav(pcmData, sampleRate);
+                        state.audioUrl = URL.createObjectURL(wavBlob);
+                        break;
+                    } else {
+                        throw new Error("Unexpected audio response structure or content.");
+                    }
+                } catch (err) {
+                    console.error("Error generating audio:", err);
+                    state.error = `Failed to generate audio. (${err.message})`;
+                    retries++;
+                    if (retries < maxRetries) {
+                        const delay = baseDelay * Math.pow(2, retries - 1);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                } finally {
+                    state.audioLoading = false;
+                    renderApp();
+                }
+            }
+        };
+
+
+        // ====================================================================
+        // DOM Rendering
+        // ====================================================================
+        const appContainer = document.getElementById('app');
+
+        const renderApp = () => {
+            appContainer.innerHTML = '';
+            const mainContent = document.createElement('div');
+            mainContent.className = 'bg-white p-8 rounded-xl shadow-2xl w-full max-w-3xl transform transition-all duration-300 hover:scale-105';
+
+            mainContent.innerHTML = `
+                <h1 class="text-4xl font-extrabold text-center text-gray-900 mb-8 tracking-tight">
+                    Find Your Perfect Car Quiz
+                </h1>
+                <div id="dynamic-content"></div>
+            `;
+            appContainer.appendChild(mainContent);
+            const dynamicContent = document.getElementById('dynamic-content');
+
+            if (state.recommendations) {
+                renderRecommendations(dynamicContent);
+            } else {
+                renderQuiz(dynamicContent);
+            }
+        };
+
+        const renderQuiz = (container) => {
+            const currentQuestion = questions[state.step];
+            if (!currentQuestion) return;
+
+            const questionContainer = document.createElement('div');
+            questionContainer.id = 'question-container';
+            questionContainer.className = 'animate-fade-in-up';
+            questionContainer.innerHTML = `
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-lg font-bold mb-4">
+                        ${currentQuestion.question}
+                    </label>
+                    <div id="question-options" class="space-y-3"></div>
+                </div>
+                <div class="mt-8 flex justify-between">
+                    <button id="previous-btn" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-full shadow-lg hover:from-blue-600 hover:to-blue-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed" ${state.step === 0 || state.loading ? 'disabled' : ''}>
+                        Previous
+                    </button>
+                    ${state.step < questions.length - 1 ? `
+                        <button id="next-btn" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold rounded-full shadow-lg hover:from-indigo-600 hover:to-indigo-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed" ${state.loading || (currentQuestion.id === 'budget' && state.answers.budget === undefined) ? 'disabled' : ''}>
+                            Next
+                        </button>
+                    ` : `
+                        <button id="submit-btn" class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-full shadow-lg hover:from-green-600 hover:to-green-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed" ${state.loading ? 'disabled' : ''}>
+                            ${state.loading ? 'Generating Recommendations...' : 'Get Recommendations'}
+                        </button>
+                    `}
+                </div>
+                ${state.loading ? `
+                    <div class="mt-6 text-center text-blue-700 font-medium">
+                        Thinking... Please wait while AI finds your perfect car!
+                    </div>
+                ` : ''}
+                ${state.error ? `<p class="text-red-600 mt-4 text-center">${state.error}</p>` : ''}
+            `;
+            container.appendChild(questionContainer);
+
+            const optionsContainer = document.getElementById('question-options');
+            if (currentQuestion.type === 'radio') {
+                currentQuestion.options.forEach(option => {
+                    const optionElement = document.createElement('label');
+                    optionElement.className = 'flex items-center text-gray-800 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200';
+                    optionElement.innerHTML = `
+                        <input type="radio" name="${currentQuestion.id}" value="${option}" class="form-radio h-5 w-5 text-blue-600 rounded-full focus:ring-blue-500" ${state.answers[currentQuestion.id] === option ? 'checked' : ''}>
+                        <span class="ml-3 text-base">${option}</span>
+                    `;
+                    optionElement.querySelector('input').addEventListener('change', (e) => handleAnswerChange(currentQuestion.id, e.target.value));
+                    optionsContainer.appendChild(optionElement);
+                });
+            } else if (currentQuestion.type === 'checkbox') {
+                currentQuestion.options.forEach(option => {
+                    const optionElement = document.createElement('label');
+                    optionElement.className = 'flex items-center text-gray-800 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200';
+                    const isChecked = state.answers[currentQuestion.id]?.includes(option) || false;
+                    optionElement.innerHTML = `
+                        <input type="checkbox" name="${currentQuestion.id}" value="${option}" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500" ${isChecked ? 'checked' : ''}>
+                        <span class="ml-3 text-base">${option}</span>
+                    `;
+                    optionElement.querySelector('input').addEventListener('change', (e) => {
+                        const currentSelections = state.answers[currentQuestion.id] || [];
+                        if (e.target.checked) {
+                            handleAnswerChange(currentQuestion.id, [...currentSelections, option]);
+                        } else {
+                            handleAnswerChange(currentQuestion.id, currentSelections.filter(item => item !== option));
+                        }
+                    });
+                    optionsContainer.appendChild(optionElement);
+                });
+            } else if (currentQuestion.type === 'text' || currentQuestion.type === 'number') {
+                const inputElement = document.createElement('input');
+                inputElement.type = currentQuestion.type;
+                inputElement.value = state.answers[currentQuestion.id] || '';
+                inputElement.placeholder = currentQuestion.placeholder;
+                inputElement.className = 'mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-base transition-all duration-200 focus:shadow-lg';
+                inputElement.addEventListener('input', (e) => handleAnswerChange(currentQuestion.id, e.target.value));
+                optionsContainer.appendChild(inputElement);
+            } else if (currentQuestion.type === 'range') {
+                const rangeContainer = document.createElement('div');
+                rangeContainer.className = 'mt-4';
+                rangeContainer.innerHTML = `
+                    <input type="range" id="${currentQuestion.id}-range" min="${currentQuestion.min}" max="${currentQuestion.max}" step="${currentQuestion.step}" value="${state.answers[currentQuestion.id] || currentQuestion.min}" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer range-lg accent-blue-600">
+                    <div id="${currentQuestion.id}-display" class="text-center mt-2 text-blue-700 font-semibold text-lg">
+                        ${currentQuestion.displayValue(state.answers[currentQuestion.id] || currentQuestion.min)}
+                    </div>
+                `;
+                const rangeInput = rangeContainer.querySelector(`#${currentQuestion.id}-range`);
+                const displayValue = rangeContainer.querySelector(`#${currentQuestion.id}-display`);
+                rangeInput.addEventListener('input', (e) => {
+                    handleAnswerChange(currentQuestion.id, parseInt(e.target.value));
+                    displayValue.textContent = currentQuestion.displayValue(e.target.value);
+                });
+                optionsContainer.appendChild(rangeContainer);
+            }
+        };
+
+        const renderRecommendations = (container) => {
+            const recommendationsContainer = document.createElement('div');
+            recommendationsContainer.className = 'text-gray-800';
+            recommendationsContainer.innerHTML = `
+                <h2 class="text-3xl font-bold text-center text-blue-700 mb-6">Your Car Recommendations</h2>
+                <div class="flex justify-center border-b border-gray-200 mb-6" id="tabs-container"></div>
+                <div id="recommendation-content" class="prose max-w-none text-lg leading-relaxed animate-fade-in-up"></div>
+                <div id="controls" class="mt-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                    <button id="retake-btn" class="px-8 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-full shadow-lg hover:from-gray-600 hover:to-gray-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300">
+                        Retake Quiz
+                    </button>
+                    <button id="listen-btn" class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-full shadow-lg hover:from-green-600 hover:to-green-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed" ${state.audioLoading ? 'disabled' : ''}>
+                        ${state.audioLoading ? 'Generating Audio...' : 'Listen to All Recommendations'}
+                    </button>
+                </div>
+                ${state.audioUrl ? `<div class="mt-6 text-center"><audio controls src="${state.audioUrl}" class="w-full max-w-md mx-auto"></audio></div>` : ''}
+                ${state.error ? `<p class="text-red-600 mt-4 text-center">${state.error}</p>` : ''}
+                <p class="text-sm text-gray-500 text-center mt-6">
+                    Note: The car suggestions shown are based on average market prices and typical features, not real-time listings.
+                </p>
+            `;
+            container.appendChild(recommendationsContainer);
+
+            const tabsContainer = document.getElementById('tabs-container');
+            const recommendationContent = document.getElementById('recommendation-content');
+
+            Object.keys(state.recommendations).forEach(tierName => {
+                const tabButton = document.createElement('button');
+                tabButton.textContent = tierName;
+                tabButton.className = `py-3 px-6 text-lg font-semibold rounded-t-lg transition-colors duration-300
+                    ${state.activeTab === tierName
+                        ? 'text-indigo-700 border-b-4 border-indigo-700 bg-indigo-50'
+                        : 'text-gray-600 hover:text-indigo-700 hover:border-b-4 hover:border-indigo-300'
+                    }`;
+                tabButton.addEventListener('click', () => {
+                    state.activeTab = tierName;
+                    renderApp();
+                });
+                tabsContainer.appendChild(tabButton);
+            });
+
+            // Render the active tab's content
+            const activeTier = state.recommendations[state.activeTab];
+            if (activeTier) {
+                let contentHTML = `
+                    <h3 class="text-2xl font-semibold text-indigo-600 mt-4 mb-2">${activeTier.title}</h3>
+                    <p class="mb-4 text-gray-700"><strong>${activeTier.description}</strong></p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                `;
+                activeTier.cars.forEach((car, index) => {
+                    contentHTML += `
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden transform transition-transform duration-300 hover:scale-103 hover:shadow-xl p-4">
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">${car.model}</h4>
+                            <p class="text-lg text-blue-600 font-semibold mb-1">Average Price: ${car.price}</p>
+                            <p class="text-sm text-gray-600 mb-1">Typical Condition: ${car.condition}</p>
+                            <p class="text-sm text-gray-600 mb-1">Typical Mileage: ${car.mileage}</p>
+                            <p class="text-base text-gray-700 mt-2">Features: ${car.features}</p>
+                        </div>
+                    `;
+                });
+                contentHTML += `</div>`;
+                recommendationContent.innerHTML = contentHTML;
+            }
+        };
+
+        // ====================================================================
+        // Event Handlers
+        // ====================================================================
+        const handleAnswerChange = (questionId, value) => {
+            state.answers[questionId] = value;
+            // The render loop will handle re-rendering as needed, but for things like range inputs,
+            // the display value updates directly via the event listener in renderQuiz.
+        };
+
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'next-btn') {
+                if (state.step < questions.length - 1) {
+                    state.step++;
+                    renderApp();
+                }
+            } else if (e.target.id === 'previous-btn') {
+                if (state.step > 0) {
+                    state.step--;
+                    renderApp();
+                }
+            } else if (e.target.id === 'submit-btn') {
+                handleSubmitQuiz();
+            } else if (e.target.id === 'retake-btn') {
+                state.recommendations = null;
+                state.step = 0;
+                state.answers = { budget: 50000 };
+                state.error = '';
+                state.audioUrl = null;
+                renderApp();
+            } else if (e.target.id === 'listen-btn') {
+                const allRecommendationsText = Object.values(state.recommendations)
+                    .map(tier => `${tier.title}: ${tier.description}\n${tier.cars.map(car => `${car.model}, with an average price of ${car.price}, is typically found in ${car.condition} condition with ${car.mileage}. Common features include: ${car.features}.`).join('\n')}`)
+                    .join('\n\n');
+                generateAudio(allRecommendationsText);
+            }
+        });
+
+        // ====================================================================
+        // Initialization
+        // ====================================================================
+        window.onload = async function() {
+            // Firebase setup
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+            if (Object.keys(firebaseConfig).length > 0) {
+                const app = initializeApp(firebaseConfig);
+                const firestoreDb = getFirestore(app);
+                const firebaseAuth = getAuth(app);
+                state.db = firestoreDb;
+                state.auth = firebaseAuth;
+
+                onAuthStateChanged(firebaseAuth, async (user) => {
+                    if (user) {
+                        state.userId = user.uid;
+                    } else {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(firebaseAuth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(firebaseAuth);
+                            }
+                        } catch (err) {
+                            console.error("Firebase authentication error:", err);
+                            state.error = "Failed to authenticate with Firebase.";
+                        }
+                    }
+                    state.isAuthReady = true;
+                    renderApp(); // Initial render after auth is ready
+                });
+            } else {
+                console.warn("Firebase config not found. Firestore features will be disabled.");
+                state.isAuthReady = true;
+                renderApp(); // Initial render without Firestore
+            }
+        };
+    </script>
+</body>
+</html>
