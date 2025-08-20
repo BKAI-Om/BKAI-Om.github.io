@@ -246,8 +246,8 @@
         };
         
         async function getAIResponse(history) {
-            const apiKey = ""; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${AIzaSyCamqljME7F5R92O6Hf-YDbWgy_rXTGk_w}`;
+            const apiKey = "AIzaSyDeyTLaEMI7aPL7nAPj_Hfm1waUrB-X4Dk"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
             
             const contents = history.map(turn => ({
                 role: turn.role,
