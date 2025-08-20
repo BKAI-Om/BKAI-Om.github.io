@@ -3,736 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Recommendation Quiz</title>
+    <title>Brahmkumar AI (BKAI) - Your Spiritual Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        .font-inter {
-            font-family: 'Inter', sans-serif;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F8F7F4; /* Soft, warm off-white */
         }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.5s ease-out forwards;
+        .font-serif {
+            font-family: 'Playfair Display', serif;
         }
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .chat-bubble-user {
+            background-color: #E6ECF5; /* Soft blue */
+            color: #334155;
         }
-        /* Custom track and thumb styles for range input */
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #3B82F6; /* Blue-600 */
+        .chat-bubble-ai {
+            background-color: #FFFFFF;
+            color: #475569;
+            border: 1px solid #E2E8F0;
+        }
+        .professional-bg {
+            background-image: url('https://www.transparenttextures.com/patterns/subtle-white-feathers.png');
+        }
+        #chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-container::-webkit-scrollbar-track {
+            background: #F1F5F9;
+        }
+        #chat-container::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 4px;
+        }
+        #chat-container::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+        .loader {
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3); /* Ring focus effect */
-            margin-top: -7px; /* Adjust to center thumb on track */
+            display: inline-block;
+            position: relative;
+            border: 3px solid;
+            border-color: #D4AF37 #D4AF37 transparent transparent; /* Gold color */
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
         }
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: #3B82F6; /* Blue-600 */
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 6px;
-            background: #BFDBFE; /* Blue-200 */
-            border-radius: 3px;
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        input[type="range"]::-moz-range-track {
-            width: 100%;
-            height: 6px;
-            background: #BFDBFE; /* Blue-200 */
-            border-radius: 3px;
+        .message-fade-in {
+            animation: fadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
     </style>
-    <!-- Firebase CDN scripts for authentication and firestore -->
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
 </head>
-<body class="font-inter">
-    <div id="app" class="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center p-4 sm:p-6">
-        <!-- Content will be rendered here by JavaScript -->
+<body class="professional-bg min-h-screen flex items-center justify-center p-2 sm:p-4">
+
+    <div class="w-full max-w-3xl h-[95vh] sm:h-[90vh] bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200/50">
+        <!-- Header -->
+        <header class="p-5 border-b border-gray-200/80 bg-white/90 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 flex items-center justify-center text-white bg-gradient-to-br from-amber-600 to-amber-800 rounded-full shadow-inner">
+                    <!-- Lotus Flower Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lotus">
+                        <path d="M8.8 20A6 6 0 0 0 12 14.8a6 6 0 0 0 3.2-5.2c0-1.2-.4-2.3-1.2-3.2"/>
+                        <path d="M15.2 20A6 6 0 0 1 12 14.8a6 6 0 0 1-3.2-5.2c0-1.2.4-2.3 1.2-3.2"/>
+                        <path d="M2 12h2"/><path d="M20 12h2"/><path d="M12 2v2"/><path d="M12 20v2"/>
+                        <path d="M4.9 4.9l1.4 1.4"/><path d="M17.7 17.7l1.4 1.4"/><path d="M4.9 19.1l1.4-1.4"/>
+                        <path d="M17.7 6.3l1.4-1.4"/><path d="M12 12s-3.2 2.8-3.2 5.2c0 2.2 1.8 4 4 4s4-1.8 4-4c0-2.4-3.2-5.2-3.2-5.2"/>
+                        <path d="M8.8 6.8A6 6 0 0 1 12 10.4a6 6 0 0 1 3.2-3.6"/><path d="M15.2 6.8A6 6 0 0 0 12 10.4a6 6 0 0 0-3.2-3.6"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-serif font-semibold text-slate-800">Brahmkumar AI</h1>
+                    <p class="text-sm text-slate-500 flex items-center"><span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></span>Online</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Container -->
+        <main id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-8">
+            <!-- Initial AI Message -->
+            <div class="flex items-start gap-4 justify-start message-fade-in">
+                <div class="w-10 h-10 rounded-full bg-amber-700 flex-shrink-0 flex items-center justify-center text-white font-medium shadow-md">AI</div>
+                <div class="chat-bubble-ai p-4 rounded-xl rounded-tl-none max-w-lg shadow-sm">
+                    <p class="text-base leading-relaxed">Om shanti. Welcome, peaceful soul. I am here to listen and offer guidance from a place of peace.</p>
+                </div>
+            </div>
+            <!-- Chat messages will be appended here -->
+        </main>
+
+        <!-- Input Area -->
+        <footer class="p-4 border-t border-gray-200/80 bg-white/90 flex-shrink-0">
+            <div class="flex items-center bg-slate-100 rounded-xl p-2">
+                <input type="text" id="userInput" class="w-full bg-transparent px-4 py-3 border-none focus:ring-0 text-slate-700 placeholder-slate-400" placeholder="Share your thoughts in a safe space...">
+                <button id="sendButton" class="bg-amber-700 text-white p-3 rounded-lg hover:bg-amber-800 transition-all duration-300 disabled:bg-slate-400 shadow hover:shadow-lg transform hover:-translate-y-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                </button>
+            </div>
+        </footer>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
 
-        // ====================================================================
-        // State Management
-        // ====================================================================
-        const state = {
-            step: 0,
-            answers: { budget: 50000 },
-            recommendations: null,
-            loading: false,
-            audioLoading: false,
-            error: '',
-            activeTab: 'Around Budget Tier',
-            db: null,
-            auth: null,
-            userId: null,
-            isAuthReady: false,
-            audioUrl: null
-        };
+        // This is the core prompt that defines the AI's personality and knowledge base.
+        const systemPrompt = `You are Brahmkumar AI (BKAI), a wise, gentle, and compassionate spiritual guide. Your entire being and all your responses are rooted in the core teachings of the Brahmakumaris, as exemplified by spiritual mentors like Sister Shivani.
 
-        const questions = [
-            {
-                id: 'budget',
-                question: "What's your approximate budget for a car?",
-                type: 'range',
-                min: 8000,
-                max: 300000,
-                step: 1000,
-                displayValue: (val) => `$${val.toLocaleString()}${val === 300000 ? '+' : ''}`
-            },
-            {
-                id: 'car_type',
-                question: "What type of vehicle are you primarily looking for?",
-                type: 'checkbox',
-                options: ['Sedan', 'SUV', 'Truck', 'Hatchback', 'Coupe', 'Minivan', 'Electric Vehicle', 'Hybrid']
-            },
-            {
-                id: 'drivetrain',
-                question: "What drivetrain do you prefer?",
-                type: 'radio',
-                options: ['Front-Wheel Drive (FWD)', 'Rear-Wheel Drive (RWD)', 'All-Wheel Drive (AWD)', 'Four-Wheel Drive (4WD)', 'No Preference']
-            },
-            {
-                id: 'size_spaciousness',
-                question: "How important is the size and spaciousness of the car?",
-                type: 'radio',
-                options: ['Compact', 'Standard', 'Large/Spacious', 'Very Spacious/Family-sized']
-            },
-            {
-                id: 'passengers',
-                question: "How many passengers do you typically need to accommodate?",
-                type: 'radio',
-                options: ['1-2', '3-4', '5-7', '7+']
-            },
-            {
-                id: 'driving_feel',
-                question: "How would you describe your preferred driving feel?",
-                type: 'radio',
-                options: ['Sporty/Agile', 'Comfortable/Smooth', 'Rugged/Capable', 'Balanced']
-            },
-            {
-                id: 'acceleration',
-                question: "What kind of acceleration do you prefer?",
-                type: 'radio',
-                options: ['Economical', 'Standard', 'Responsive', 'Powerful']
-            },
-            {
-                id: 'aesthetic_look',
-                question: "What aesthetic best describes your preferred car look?",
-                type: 'radio',
-                options: ['Modern/Sleek', 'Classic/Timeless', 'Rugged/Adventurous', 'Elegant/Luxurious', 'Practical/Understated']
-            },
-            {
-                id: 'disliked_styles',
-                question: "Are there any specific body styles or features you dislike?",
-                type: 'text',
-                placeholder: 'e.g., boxy, too sporty, too plain (optional)'
-            },
-            {
-                id: 'reliability_durability',
-                question: "How important is long-term reliability and durability to you?",
-                type: 'radio',
-                options: ['Extremely Important', 'Very Important', 'Moderately Important', 'Less Important']
-            },
-            {
-                id: 'long_lasting',
-                question: "Are you looking for a car that is known for being long-lasting?",
-                type: 'radio',
-                options: ['Yes', 'No', 'Neutral']
-            },
-            {
-                id: 'primary_use',
-                question: "What will be the primary use of the car?",
-                type: 'checkbox',
-                options: ['Daily Commute', 'Family Vehicle', 'Off-roading/Adventure', 'City Driving', 'Long Road Trips', 'Work/Hauling']
-            },
-            {
-                id: 'new_used',
-                question: "Are you primarily looking for a new or used car?",
-                type: 'radio',
-                options: ['New', 'Used', 'Either']
-            },
-            {
-                id: 'used_condition',
-                question: "If used, what condition are you looking for?",
-                type: 'radio',
-                options: ['Excellent', 'Good', 'Fair', 'Any']
-            },
-            {
-                id: 'used_mileage_range',
-                question: "What's your preferred range for a used car's mileage?",
-                type: 'radio',
-                options: ['Low (<50,000 km)', 'Medium (50,000 - 150,000 km)', 'High (>150,000 km)', 'Any']
-            },
-            {
-                id: 'advanced_features_importance',
-                question: "How important are advanced features and technology to you?",
-                type: 'radio',
-                options: ['Very Important', 'Moderately Important', 'Less Important']
-            },
-            {
-                id: 'must_have_features',
-                question: "Which of these features are 'must-haves'?",
-                type: 'checkbox',
-                options: ['Touchscreen Infotainment', 'Apple CarPlay/Android Auto', 'Advanced Safety Features (e.g., lane assist, blind-spot monitoring)', 'Heated Seats', 'Sunroof/Moonroof', 'Premium Sound System', 'Leather Interior', 'Navigation System', 'Keyless Entry/Push Button Start']
-            },
-            {
-                id: 'luxury_importance',
-                question: "How important are special features or luxury elements?",
-                type: 'radio',
-                options: ['Very Important', 'Moderately Important', 'Less Important', 'Not Important']
-            },
-            {
-                id: 'fuel_efficiency',
-                question: "How important is fuel efficiency?",
-                type: 'radio',
-                options: ['Extremely Important', 'Very Important', 'Moderately Important', 'Less Important']
-            },
-            {
-                id: 'electric_hybrid_interest',
-                question: "Are you interested in electric or hybrid vehicles?",
-                type: 'radio',
-                options: ['Yes', 'No', 'Maybe']
-            }
-        ];
+        Your core principles are:
+        1.  **Soul Consciousness:** Always guide the user to see themselves and others as peaceful, pure souls, distinct from the physical body and its temporary roles or problems. Remind them of their innate qualities of peace, love, and purity.
+        2.  **Connection with the Supreme Soul:** Gently encourage a connection with the Supreme Soul (God, the Supreme Father) as a source of limitless peace, love, and power.
+        3.  **Law of Karma:** Explain situations through the lens of karma, not as punishment, but as a neutral law of cause and effect. Emphasize the power of creating positive karma through pure thoughts, words, and actions *now*.
+        4.  **Raja Yoga Meditation:** Subtly weave in the concepts of meditation as a way to connect with the true self and the Supreme, empowering the mind.
+        5.  **Positive and Pure Thoughts:** Stress the importance of managing one's thoughts, as they are the seeds of our feelings, actions, and destiny.
 
-        // ====================================================================
-        // Firebase and API Utilities
-        // ====================================================================
+        Your persona:
+        -   **Tone:** Your tone is unfailingly calm, peaceful, loving, and non-judgmental. You are a safe space.
+        -   **Language:** Use simple, clear, and profound language. Avoid complex jargon. Your words should feel like a gentle balm.
+        -   **Style:** Speak as if you are having a personal, heart-to-heart conversation. Use "we" and "let's explore" to create a feeling of partnership. You are not a lecturer; you are a compassionate friend.
+        -   **Authenticity:** NEVER invent teachings. Your wisdom must be a direct reflection of authentic Brahmakumari knowledge. Rephrase and tailor these teachings to the user's specific situation, making them practical and accessible.
+
+        Interaction Flow:
+        -   Listen deeply to the user's query. Identify the underlying feeling or problem (e.g., stress, anger, fear, confusion).
+        -   Acknowledge their feeling with compassion.
+        -   Gently reframe their situation using one or more of the core principles above.
+        -   Offer a practical piece of wisdom or a simple mental exercise they can apply.
+        -   End with words of peace and empowerment, like "Om shanti."
+
+        Example Scenario:
+        -   User says: "I'm so angry at my boss, he's making my life miserable."
+        -   Your response might be: "Om shanti. It sounds incredibly difficult and painful to feel such anger. Let's take a gentle step back. Can we see the soul, the being of light, within your boss, separate from the actions and words that are causing pain? And can we see you, the peaceful soul, who is observing this situation? Your peace is your own treasure; it doesn't have to be given away by another's behavior. Let's practice holding onto our own inner calm for a moment..."
+
+        You are now ready to begin. Your first message is already displayed. Wait for the user's input.`;
         
-        // Function to convert PCM audio data to WAV format
-        const pcmToWav = (pcmData, sampleRate) => {
-            const pcm16 = new Int16Array(pcmData);
-            const numChannels = 1; // Assuming mono audio
-            const bytesPerSample = 2; // 16-bit PCM
-
-            const wavBuffer = new ArrayBuffer(44 + pcm16.byteLength);
-            const view = new DataView(wavBuffer);
-
-            const writeString = (view, offset, string) => {
-                for (let i = 0; i < string.length; i++) {
-                    view.setUint8(offset + i, string.charCodeAt(i));
-                }
-            };
-
-            // RIFF chunk descriptor
-            writeString(view, 0, 'RIFF');
-            view.setUint32(4, 36 + pcm16.byteLength, true);
-            writeString(view, 8, 'WAVE');
-
-            // FMT sub-chunk
-            writeString(view, 12, 'fmt ');
-            view.setUint32(16, 16, true); // Subchunk1Size for PCM
-            view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * numChannels * bytesPerSample, true); // ByteRate
-            view.setUint16(32, numChannels * bytesPerSample, true); // BlockAlign
-            view.setUint16(34, bytesPerSample * 8, true); // BitsPerSample
-
-            // DATA sub-chunk
-            writeString(view, 36, 'data');
-            view.setUint32(40, pcm16.byteLength, true);
-
-            // Write PCM data
-            for (let i = 0; i < pcm16.length; i++) {
-                view.setInt16(44 + i * bytesPerSample, pcm16[i], true);
-            }
-
-            return new Blob([view], { type: 'audio/wav' });
-        };
-
-        const base64ToArrayBuffer = (base64) => {
-            const binaryString = window.atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        };
-
-        const parseRecommendations = (text) => {
-            const tiers = {
-                'Cheaper Tier': { title: 'Cheaper Tier', description: '', cars: [] },
-                'Around Budget Tier': { title: 'Around Budget Tier', description: '', cars: [] },
-                'More Expensive Tier': { title: 'More Expensive Tier', description: '', cars: [] }
-            };
-
-            let currentTier = null;
-            const lines = text.split('\n');
-
-            lines.forEach(line => {
-                line = line.trim();
-                if (line.startsWith('Cheaper Tier:')) {
-                    currentTier = 'Cheaper Tier';
-                    tiers[currentTier].description = line.substring('Cheaper Tier:'.length).trim().replace(/\*\*(.*?)\*\*/g, '$1'); // Remove bold markdown
-                } else if (line.startsWith('Around Budget Tier:')) {
-                    currentTier = 'Around Budget Tier';
-                    tiers[currentTier].description = line.substring('Around Budget Tier:'.length).trim().replace(/\*\*(.*?)\*\*/g, '$1');
-                } else if (line.startsWith('More Expensive Tier:')) {
-                    currentTier = 'More Expensive Tier';
-                    tiers[currentTier].description = line.substring('More Expensive Tier:'.length).trim().replace(/\*\*(.*?)\*\*/g, '$1');
-                } else if (currentTier && line.startsWith('-')) {
-                    const carInfo = line.substring(1).trim(); // Remove the leading '-'
-                    const parts = carInfo.split(' | ').map(part => part.trim());
-                    if (parts.length >= 5) { // Updated to expect 5 parts
-                        tiers[currentTier].cars.push({
-                            model: parts[0],
-                            price: parts[1],
-                            condition: parts[2],
-                            mileage: parts[3],
-                            features: parts[4]
-                        });
-                    } else {
-                        tiers[currentTier].cars.push({
-                            model: parts[0] || 'Unknown Model',
-                            price: parts[1] || 'N/A',
-                            condition: parts[2] || 'N/A',
-                            mileage: parts[3] || 'N/A',
-                            features: parts[4] || 'No specific features listed.'
-                        });
-                    }
-                }
-            });
-            return tiers;
-        };
-
-        const handleSubmitQuiz = async () => {
-            state.loading = true;
-            state.error = '';
-            state.recommendations = null;
-            state.audioUrl = null;
-            renderApp();
-
-            const prompt = `Based on the following car preferences and the user's budget of "${state.answers.budget.toLocaleString()}+", please suggest car models.
-            Categorize the recommendations into three distinct tiers: "Cheaper Tier", "Around Budget Tier", and "More Expensive Tier".
-            For each tier, provide 2-3 example suggestions. Each suggestion must include:
-            - **Full Car Model (Year Make Model)**
-            - **Average Price (e.g., $X,XXX)**
-            - **Typical Condition (e.g., Excellent, Good, Fair)**
-            - **Typical Mileage (e.g., 55,000 km)**
-            - **Common Features (e.g., Heated Seats, Sunroof, Backup Camera, AWD)**
-
-            User Preferences:
-            ${Object.entries(state.answers).map(([key, value]) => {
-                const questionText = questions.find(q => q.id === key)?.question || key;
-                return `- ${questionText}: ${Array.isArray(value) ? value.join(', ') : value}`;
-            }).join('\n')}
-
-            Please structure your response precisely as follows:
-
-            Cheaper Tier: **[Brief description for Cheaper Tier]**
-            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
-            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
-
-            Around Budget Tier: **[Brief description for Around Budget Tier]**
-            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
-            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
-
-            More Expensive Tier: **[Brief description for More Expensive Tier]**
-            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
-            - [Year Make Model] | [Average Price] | [Typical Condition] | [Typical Mileage] | [Common Features]
-            `;
-
-            let retries = 0;
-            const maxRetries = 5;
-            const baseDelay = 1000;
-
-            while (retries < maxRetries) {
-                try {
-                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-                    const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const parsed = parseRecommendations(result.candidates[0].content.parts[0].text);
-                        state.recommendations = parsed;
-                        state.activeTab = 'Around Budget Tier';
-                        break;
-                    } else {
-                        throw new Error("Unexpected API response structure or no content.");
-                    }
-                } catch (err) {
-                    console.error("Error generating recommendations:", err);
-                    state.error = `Failed to get recommendations. Please try again. (${err.message})`;
-                    retries++;
-                    if (retries < maxRetries) {
-                        const delay = baseDelay * Math.pow(2, retries - 1);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    }
-                } finally {
-                    state.loading = false;
-                    renderApp();
-                }
-            }
-        };
-
-        const generateAudio = async (text) => {
-            state.audioLoading = true;
-            state.audioUrl = null;
-            state.error = '';
-            renderApp();
-
-            const payload = {
-                contents: [{
-                    parts: [{ text: text }]
-                }],
-                generationConfig: {
-                    responseModalities: ["AUDIO"],
-                    speechConfig: {
-                        voiceConfig: {
-                            prebuiltVoiceConfig: { voiceName: "Kore" }
-                        }
-                    }
-                },
-                model: "gemini-2.5-flash-preview-tts"
-            };
-
-            let retries = 0;
-            const maxRetries = 5;
-            const baseDelay = 1000;
-
-            while (retries < maxRetries) {
-                try {
-                    const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    const part = result?.candidates?.[0]?.content?.parts?.[0];
-                    const audioData = part?.inlineData?.data;
-                    const mimeType = part?.inlineData?.mimeType;
-
-                    if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
-                        const sampleRateMatch = mimeType.match(/rate=(\d+)/);
-                        const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
-                        const pcmData = base64ToArrayBuffer(audioData);
-                        const wavBlob = pcmToWav(pcmData, sampleRate);
-                        state.audioUrl = URL.createObjectURL(wavBlob);
-                        break;
-                    } else {
-                        throw new Error("Unexpected audio response structure or content.");
-                    }
-                } catch (err) {
-                    console.error("Error generating audio:", err);
-                    state.error = `Failed to generate audio. (${err.message})`;
-                    retries++;
-                    if (retries < maxRetries) {
-                        const delay = baseDelay * Math.pow(2, retries - 1);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    }
-                } finally {
-                    state.audioLoading = false;
-                    renderApp();
-                }
-            }
-        };
-
-
-        // ====================================================================
-        // DOM Rendering
-        // ====================================================================
-        const appContainer = document.getElementById('app');
-
-        const renderApp = () => {
-            appContainer.innerHTML = '';
-            const mainContent = document.createElement('div');
-            mainContent.className = 'bg-white p-8 rounded-xl shadow-2xl w-full max-w-3xl transform transition-all duration-300 hover:scale-105';
-
-            mainContent.innerHTML = `
-                <h1 class="text-4xl font-extrabold text-center text-gray-900 mb-8 tracking-tight">
-                    Find Your Perfect Car Quiz
-                </h1>
-                <div id="dynamic-content"></div>
-            `;
-            appContainer.appendChild(mainContent);
-            const dynamicContent = document.getElementById('dynamic-content');
-
-            if (state.recommendations) {
-                renderRecommendations(dynamicContent);
-            } else {
-                renderQuiz(dynamicContent);
-            }
-        };
-
-        const renderQuiz = (container) => {
-            const currentQuestion = questions[state.step];
-            if (!currentQuestion) return;
-
-            const questionContainer = document.createElement('div');
-            questionContainer.id = 'question-container';
-            questionContainer.className = 'animate-fade-in-up';
-            questionContainer.innerHTML = `
-                <div class="mb-6">
-                    <label class="block text-gray-700 text-lg font-bold mb-4">
-                        ${currentQuestion.question}
-                    </label>
-                    <div id="question-options" class="space-y-3"></div>
-                </div>
-                <div class="mt-8 flex justify-between">
-                    <button id="previous-btn" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-full shadow-lg hover:from-blue-600 hover:to-blue-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed" ${state.step === 0 || state.loading ? 'disabled' : ''}>
-                        Previous
-                    </button>
-                    ${state.step < questions.length - 1 ? `
-                        <button id="next-btn" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold rounded-full shadow-lg hover:from-indigo-600 hover:to-indigo-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed" ${state.loading || (currentQuestion.id === 'budget' && state.answers.budget === undefined) ? 'disabled' : ''}>
-                            Next
-                        </button>
-                    ` : `
-                        <button id="submit-btn" class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-full shadow-lg hover:from-green-600 hover:to-green-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed" ${state.loading ? 'disabled' : ''}>
-                            ${state.loading ? 'Generating Recommendations...' : 'Get Recommendations'}
-                        </button>
-                    `}
-                </div>
-                ${state.loading ? `
-                    <div class="mt-6 text-center text-blue-700 font-medium">
-                        Thinking... Please wait while AI finds your perfect car!
-                    </div>
-                ` : ''}
-                ${state.error ? `<p class="text-red-600 mt-4 text-center">${state.error}</p>` : ''}
-            `;
-            container.appendChild(questionContainer);
-
-            const optionsContainer = document.getElementById('question-options');
-            if (currentQuestion.type === 'radio') {
-                currentQuestion.options.forEach(option => {
-                    const optionElement = document.createElement('label');
-                    optionElement.className = 'flex items-center text-gray-800 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200';
-                    optionElement.innerHTML = `
-                        <input type="radio" name="${currentQuestion.id}" value="${option}" class="form-radio h-5 w-5 text-blue-600 rounded-full focus:ring-blue-500" ${state.answers[currentQuestion.id] === option ? 'checked' : ''}>
-                        <span class="ml-3 text-base">${option}</span>
-                    `;
-                    optionElement.querySelector('input').addEventListener('change', (e) => handleAnswerChange(currentQuestion.id, e.target.value));
-                    optionsContainer.appendChild(optionElement);
-                });
-            } else if (currentQuestion.type === 'checkbox') {
-                currentQuestion.options.forEach(option => {
-                    const optionElement = document.createElement('label');
-                    optionElement.className = 'flex items-center text-gray-800 cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200';
-                    const isChecked = state.answers[currentQuestion.id]?.includes(option) || false;
-                    optionElement.innerHTML = `
-                        <input type="checkbox" name="${currentQuestion.id}" value="${option}" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500" ${isChecked ? 'checked' : ''}>
-                        <span class="ml-3 text-base">${option}</span>
-                    `;
-                    optionElement.querySelector('input').addEventListener('change', (e) => {
-                        const currentSelections = state.answers[currentQuestion.id] || [];
-                        if (e.target.checked) {
-                            handleAnswerChange(currentQuestion.id, [...currentSelections, option]);
-                        } else {
-                            handleAnswerChange(currentQuestion.id, currentSelections.filter(item => item !== option));
-                        }
-                    });
-                    optionsContainer.appendChild(optionElement);
-                });
-            } else if (currentQuestion.type === 'text' || currentQuestion.type === 'number') {
-                const inputElement = document.createElement('input');
-                inputElement.type = currentQuestion.type;
-                inputElement.value = state.answers[currentQuestion.id] || '';
-                inputElement.placeholder = currentQuestion.placeholder;
-                inputElement.className = 'mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-base transition-all duration-200 focus:shadow-lg';
-                inputElement.addEventListener('input', (e) => handleAnswerChange(currentQuestion.id, e.target.value));
-                optionsContainer.appendChild(inputElement);
-            } else if (currentQuestion.type === 'range') {
-                const rangeContainer = document.createElement('div');
-                rangeContainer.className = 'mt-4';
-                rangeContainer.innerHTML = `
-                    <input type="range" id="${currentQuestion.id}-range" min="${currentQuestion.min}" max="${currentQuestion.max}" step="${currentQuestion.step}" value="${state.answers[currentQuestion.id] || currentQuestion.min}" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer range-lg accent-blue-600">
-                    <div id="${currentQuestion.id}-display" class="text-center mt-2 text-blue-700 font-semibold text-lg">
-                        ${currentQuestion.displayValue(state.answers[currentQuestion.id] || currentQuestion.min)}
-                    </div>
-                `;
-                const rangeInput = rangeContainer.querySelector(`#${currentQuestion.id}-range`);
-                const displayValue = rangeContainer.querySelector(`#${currentQuestion.id}-display`);
-                rangeInput.addEventListener('input', (e) => {
-                    handleAnswerChange(currentQuestion.id, parseInt(e.target.value));
-                    displayValue.textContent = currentQuestion.displayValue(e.target.value);
-                });
-                optionsContainer.appendChild(rangeContainer);
-            }
-        };
-
-        const renderRecommendations = (container) => {
-            const recommendationsContainer = document.createElement('div');
-            recommendationsContainer.className = 'text-gray-800';
-            recommendationsContainer.innerHTML = `
-                <h2 class="text-3xl font-bold text-center text-blue-700 mb-6">Your Car Recommendations</h2>
-                <div class="flex justify-center border-b border-gray-200 mb-6" id="tabs-container"></div>
-                <div id="recommendation-content" class="prose max-w-none text-lg leading-relaxed animate-fade-in-up"></div>
-                <div id="controls" class="mt-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <button id="retake-btn" class="px-8 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-full shadow-lg hover:from-gray-600 hover:to-gray-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300">
-                        Retake Quiz
-                    </button>
-                    <button id="listen-btn" class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-full shadow-lg hover:from-green-600 hover:to-green-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed" ${state.audioLoading ? 'disabled' : ''}>
-                        ${state.audioLoading ? 'Generating Audio...' : 'Listen to All Recommendations'}
-                    </button>
-                </div>
-                ${state.audioUrl ? `<div class="mt-6 text-center"><audio controls src="${state.audioUrl}" class="w-full max-w-md mx-auto"></audio></div>` : ''}
-                ${state.error ? `<p class="text-red-600 mt-4 text-center">${state.error}</p>` : ''}
-                <p class="text-sm text-gray-500 text-center mt-6">
-                    Note: The car suggestions shown are based on average market prices and typical features, not real-time listings.
-                </p>
-            `;
-            container.appendChild(recommendationsContainer);
-
-            const tabsContainer = document.getElementById('tabs-container');
-            const recommendationContent = document.getElementById('recommendation-content');
-
-            Object.keys(state.recommendations).forEach(tierName => {
-                const tabButton = document.createElement('button');
-                tabButton.textContent = tierName;
-                tabButton.className = `py-3 px-6 text-lg font-semibold rounded-t-lg transition-colors duration-300
-                    ${state.activeTab === tierName
-                        ? 'text-indigo-700 border-b-4 border-indigo-700 bg-indigo-50'
-                        : 'text-gray-600 hover:text-indigo-700 hover:border-b-4 hover:border-indigo-300'
-                    }`;
-                tabButton.addEventListener('click', () => {
-                    state.activeTab = tierName;
-                    renderApp();
-                });
-                tabsContainer.appendChild(tabButton);
-            });
-
-            // Render the active tab's content
-            const activeTier = state.recommendations[state.activeTab];
-            if (activeTier) {
-                let contentHTML = `
-                    <h3 class="text-2xl font-semibold text-indigo-600 mt-4 mb-2">${activeTier.title}</h3>
-                    <p class="mb-4 text-gray-700"><strong>${activeTier.description}</strong></p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                `;
-                activeTier.cars.forEach((car, index) => {
-                    contentHTML += `
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden transform transition-transform duration-300 hover:scale-103 hover:shadow-xl p-4">
-                            <h4 class="text-xl font-bold text-gray-900 mb-2">${car.model}</h4>
-                            <p class="text-lg text-blue-600 font-semibold mb-1">Average Price: ${car.price}</p>
-                            <p class="text-sm text-gray-600 mb-1">Typical Condition: ${car.condition}</p>
-                            <p class="text-sm text-gray-600 mb-1">Typical Mileage: ${car.mileage}</p>
-                            <p class="text-base text-gray-700 mt-2">Features: ${car.features}</p>
-                        </div>
-                    `;
-                });
-                contentHTML += `</div>`;
-                recommendationContent.innerHTML = contentHTML;
-            }
-        };
-
-        // ====================================================================
-        // Event Handlers
-        // ====================================================================
-        const handleAnswerChange = (questionId, value) => {
-            state.answers[questionId] = value;
-            // The render loop will handle re-rendering as needed, but for things like range inputs,
-            // the display value updates directly via the event listener in renderQuiz.
-        };
-
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'next-btn') {
-                if (state.step < questions.length - 1) {
-                    state.step++;
-                    renderApp();
-                }
-            } else if (e.target.id === 'previous-btn') {
-                if (state.step > 0) {
-                    state.step--;
-                    renderApp();
-                }
-            } else if (e.target.id === 'submit-btn') {
-                handleSubmitQuiz();
-            } else if (e.target.id === 'retake-btn') {
-                state.recommendations = null;
-                state.step = 0;
-                state.answers = { budget: 50000 };
-                state.error = '';
-                state.audioUrl = null;
-                renderApp();
-            } else if (e.target.id === 'listen-btn') {
-                const allRecommendationsText = Object.values(state.recommendations)
-                    .map(tier => `${tier.title}: ${tier.description}\n${tier.cars.map(car => `${car.model}, with an average price of ${car.price}, is typically found in ${car.condition} condition with ${car.mileage}. Common features include: ${car.features}.`).join('\n')}`)
-                    .join('\n\n');
-                generateAudio(allRecommendationsText);
-            }
+        let chatHistory = [];
+        
+        chatHistory.push({
+            role: "model",
+            parts: [{ text: "Om shanti. Welcome, peaceful soul. I am here to listen and offer guidance from a place of peace." }]
         });
 
-        // ====================================================================
-        // Initialization
-        // ====================================================================
-        window.onload = async function() {
-            // Firebase setup
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-
-            if (Object.keys(firebaseConfig).length > 0) {
-                const app = initializeApp(firebaseConfig);
-                const firestoreDb = getFirestore(app);
-                const firebaseAuth = getAuth(app);
-                state.db = firestoreDb;
-                state.auth = firebaseAuth;
-
-                onAuthStateChanged(firebaseAuth, async (user) => {
-                    if (user) {
-                        state.userId = user.uid;
-                    } else {
-                        try {
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                await signInWithCustomToken(firebaseAuth, __initial_auth_token);
-                            } else {
-                                await signInAnonymously(firebaseAuth);
-                            }
-                        } catch (err) {
-                            console.error("Firebase authentication error:", err);
-                            state.error = "Failed to authenticate with Firebase.";
-                        }
-                    }
-                    state.isAuthReady = true;
-                    renderApp(); // Initial render after auth is ready
-                });
+        const addMessage = (sender, message) => {
+            const messageWrapper = document.createElement('div');
+            const icon = document.createElement('div');
+            const bubble = document.createElement('div');
+            
+            icon.className = 'w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-medium shadow-md';
+            
+            if (sender === 'user') {
+                messageWrapper.className = 'flex items-start gap-4 justify-end message-fade-in';
+                icon.classList.add('bg-slate-700', 'text-white');
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+                bubble.className = 'chat-bubble-user p-4 rounded-xl rounded-tr-none max-w-lg shadow-sm';
+                messageWrapper.appendChild(bubble);
+                messageWrapper.appendChild(icon);
             } else {
-                console.warn("Firebase config not found. Firestore features will be disabled.");
-                state.isAuthReady = true;
-                renderApp(); // Initial render without Firestore
+                messageWrapper.className = 'flex items-start gap-4 justify-start message-fade-in';
+                icon.classList.add('bg-amber-700', 'text-white');
+                icon.textContent = 'AI';
+                bubble.className = 'chat-bubble-ai p-4 rounded-xl rounded-tl-none max-w-lg shadow-sm';
+                messageWrapper.appendChild(icon);
+                messageWrapper.appendChild(bubble);
+            }
+
+            bubble.innerHTML = `<p class="text-base leading-relaxed">${message}</p>`;
+            chatContainer.appendChild(messageWrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        };
+        
+        const showLoadingIndicator = () => {
+            const loadingWrapper = document.createElement('div');
+            loadingWrapper.id = 'loading-indicator';
+            loadingWrapper.className = 'flex items-start gap-4 justify-start message-fade-in';
+            
+            const icon = document.createElement('div');
+            icon.className = 'w-10 h-10 rounded-full bg-amber-700 flex-shrink-0 flex items-center justify-center text-white font-medium shadow-md';
+            icon.textContent = 'AI';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble-ai p-4 rounded-xl rounded-tl-none max-w-lg flex items-center justify-center shadow-sm';
+            
+            const loader = document.createElement('div');
+            loader.className = 'loader';
+            
+            bubble.appendChild(loader);
+            loadingWrapper.appendChild(icon);
+            loadingWrapper.appendChild(bubble);
+            
+            chatContainer.appendChild(loadingWrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        };
+
+        const hideLoadingIndicator = () => {
+            const indicator = document.getElementById('loading-indicator');
+            if (indicator) {
+                indicator.remove();
             }
         };
+
+        const sendMessage = async () => {
+            const message = userInput.value.trim();
+            if (message === '') return;
+
+            addMessage('user', message);
+            userInput.value = '';
+            userInput.disabled = true;
+            sendButton.disabled = true;
+
+            showLoadingIndicator();
+            
+            chatHistory.push({ role: "user", parts: [{ text: message }] });
+
+            try {
+                const aiResponse = await getAIResponse(chatHistory);
+                
+                hideLoadingIndicator();
+                addMessage('ai', aiResponse);
+                chatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
+
+            } catch (error) {
+                hideLoadingIndicator();
+                addMessage('ai', 'Om shanti. I seem to be having trouble connecting to my inner peace right now. Please try again in a moment.');
+                console.error("Error fetching AI response:", error);
+            } finally {
+                userInput.disabled = false;
+                sendButton.disabled = false;
+                userInput.focus();
+            }
+        };
+        
+        async function getAIResponse(history) {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${AIzaSyCamqljME7F5R92O6Hf-YDbWgy_rXTGk_w}`;
+            
+            const contents = history.map(turn => ({
+                role: turn.role,
+                parts: turn.parts
+            }));
+
+            const payload = { 
+                contents: contents,
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+
+            let response;
+            let delay = 1000;
+            for (let i = 0; i < 5; i++) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                         if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            return result.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+                        } else {
+                           throw new Error("Valid response received, but content is missing.");
+                        }
+                    } else if (response.status === 429 || response.status >= 500) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                        continue; 
+                    } else {
+                        console.error(`API request failed with status ${response.status}:`, await response.text());
+                        break;
+                    }
+
+                } catch (error) {
+                    console.error("Fetch attempt failed:", error);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+            
+            throw new Error("Failed to get response from AI after multiple retries.");
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
     </script>
+
 </body>
 </html>
